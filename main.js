@@ -16,7 +16,7 @@ http.createSecureServer({
   cert: fs.readFileSync('localhost-cert.pem')
 }, function (req, res) {
   var q = url.parse(req.url, true);
-  //~ console.log("Requested ", q.pathname);
+  console.log("Requested ", q.pathname);
   if (q.pathname == "/testStream") {
     setTimeout(function(){
       //~ console.log("closing");
@@ -58,3 +58,5 @@ http.createSecureServer({
     });
   }
 }).listen(PORT);
+
+console.log("Listening on port ", PORT);
