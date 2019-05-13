@@ -4,6 +4,6 @@
   "description": "Trabajo de clase Sistemas Distribuidos",
   "author": "Iris Dominguez",
   "main": "",
-  "private": true
+  "private": true,
   "dependencies": {}
 }
