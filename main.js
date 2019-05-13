@@ -1,7 +1,7 @@
 var http = require('http2');
 var url = require('url');
 var fs = require('fs');
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.OPENSHIFT_NODEJS_PORT || 5000;
 
 var fillString = "";
 for (var i = 0; i < 20; i++) {
