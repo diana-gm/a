@@ -1,10 +1,23 @@
 const { performance } = require('perf_hooks');
-
-const http = require('https');
 const fs = require('fs');
 
+const httpVersion = parseInt(process.argv[2]) || 1;
+var http = null;
+if (httpVersion == 2)
+  http = require('http2');
+else
+  http = require('https');
+  
+var PORT = process.env.PORT;
+if (httpVersion == 2)
+  PORT = PORT || 5002;
+else
+  PORT = PORT || 5000;
+  
+const HOSTNAME = "localhost";
+
 var index = 0;
-var numTests = parseInt(process.argv[2]) || 5;
+var numTests = parseInt(process.argv[3]) || 5;
 
 var aggregatedSpeed = 0;
 var testsFinished = 0;
@@ -17,11 +30,8 @@ function beginTest() {
     var timeSinceStart = performance.now();
     var timeSinceLastPacket = timeSinceStart;
     
-    const file = fs.createWriteStream("stream.txt");
-    const request = http.get("https://serene-gorge-69729.herokuapp.com/testStream", function(response) {
-    //~ const request = http.get("http://0.0.0.0:5000/testStream", function(response) {
-        response.pipe(file);
-        response.on("data", function(data) {
+    function processResponse(response) {
+        response.on('data', (data) => {
             // Process the data
             packets++;
             var size = data.length;
@@ -44,7 +54,7 @@ function beginTest() {
             //~ console.log("Speed now (B/ms): ", speedNow);
             //~ console.log("Speed absolute (B/ms): ", speedGlobal);
         });
-        response.on("end", function(data) {
+        response.on('end', () => {
             var absoluteTime = timeSinceLastPacket - timeSinceStart;
             var speedGlobal = sizeDownloaded / absoluteTime;
             console.log("----------------------------------------------");
@@ -66,15 +76,45 @@ function beginTest() {
                 numberstring = Number.parseFloat(aggregatedSpeed/125).toFixed(2);
                 console.log("Aggregated download speed (Mb/s): ", numberstring);
                 
-                var toWrite = "" + numTests + ", " + numberstring + "\n";
+                //~ var toWrite = "" + numTests + ", " + numberstring + "\n";
                 
-                fs.appendFile('multiples.txt', toWrite, function (err) {
-                  if (err) throw err;
-                  console.log('Saved!');
-                });
+                //~ fs.appendFile('multiples.txt', toWrite, function (err) {
+                  //~ if (err) throw err;
+                  //~ console.log("Saved!");
+                //~ });
+            }
+            if (httpVersion == 2) {
+                client.close();
             }
         });
-    });
+    }
+    
+    if (httpVersion == 1) {
+        const options = {
+          hostname: HOSTNAME,
+          port: PORT,
+          path: '/testStream',
+          method: 'GET',
+          ca: fs.readFileSync('localhost-cert.pem')
+        };
+        options.agent = new http.Agent(options);
+        var req = http.get(options, (response)=>{
+            processResponse(response);
+        });
+    }
+    else {
+        var client = http.connect('https://' + HOSTNAME + ':' + PORT, {
+          ca: fs.readFileSync('localhost-cert.pem')
+        });
+        client.on('error', (err) => console.error(err));
+
+        var req = client.request({ ':path': '/testStream' });
+        req.setEncoding('utf8');
+        
+        processResponse(req);
+        
+        req.end();
+    }
 } 
 
 for (var i = 0; i < numTests; i++) {
