@@ -1,9 +1,4 @@
-{
-  "name": "Router",
-  "version": "0.0.1",
-  "description": "Trabajo de clase Sistemas Distribuidos",
-  "author": "Iris Dominguez",
-  "main": "",
-  "private": true,
-  "dependencies": {}
-}
+"scripts": {
+  "start": "node main.js 1 8080"
+},
+"main": "main.js "
